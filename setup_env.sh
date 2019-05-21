@@ -6,9 +6,11 @@ set -e
 #---------
 OPENSSL_DOWNLOAD=$DOWNLOAD_CACHE/openssl-$OPENSSL
 OPENRESTY_DOWNLOAD=$DOWNLOAD_CACHE/openresty-$OPENRESTY
+KONG_NGINX_MODULE_DOWNLOAD=$DOWNLOAD_CACHE/lua-kong-nginx-module-$KONG_NGINX_MODULE
 LUAROCKS_DOWNLOAD=$DOWNLOAD_CACHE/luarocks-$LUAROCKS
 
-mkdir -p $OPENSSL_DOWNLOAD $OPENRESTY_DOWNLOAD $LUAROCKS_DOWNLOAD
+mkdir -p $OPENSSL_DOWNLOAD $OPENRESTY_DOWNLOAD $LUAROCKS_DOWNLOAD \
+         $KONG_NGINX_MODULE_DOWNLOAD
 
 if [ ! "$(ls -A $OPENSSL_DOWNLOAD)" ]; then
   pushd $DOWNLOAD_CACHE
@@ -24,6 +26,10 @@ fi
 
 if [ ! "$(ls -A $LUAROCKS_DOWNLOAD)" ]; then
   git clone -q https://github.com/keplerproject/luarocks.git $LUAROCKS_DOWNLOAD
+fi
+
+if [ ! "$(ls -A $KONG_NGINX_MODULE_DOWNLOAD)" ]; then
+  git clone -q https://github.com/Kong/lua-kong-nginx-module.git $KONG_NGINX_MODULE_DOWNLOAD
 fi
 
 #--------
@@ -54,12 +60,18 @@ if [ ! "$(ls -A $OPENRESTY_INSTALL)" ]; then
     "--with-http_stub_status_module"
     "--with-http_v2_module"
     "--with-stream_ssl_preread_module"
+    "--add-module=$KONG_NGINX_MODULE_DOWNLOAD"
   )
 
   pushd $OPENRESTY_DOWNLOAD
     eval ./configure ${OPENRESTY_OPTS[*]} &> build.log || (cat build.log && exit 1)
     make &> build.log || (cat build.log && exit 1)
     make install &> build.log || (cat build.log && exit 1)
+
+    pushd $KONG_NGINX_MODULE_DOWNLOAD
+      git checkout -q $KONG_NGINX_MODULE
+      make install LUA_LIB_DIR=$OPENRESTY_INSTALL/lualib
+    popd
   popd
 fi
 
