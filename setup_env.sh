@@ -29,7 +29,7 @@ if [ ! "$(ls -A $LUAROCKS_DOWNLOAD)" ]; then
 fi
 
 if [ ! "$(ls -A $KONG_NGINX_MODULE_DOWNLOAD)" ]; then
-  git clone -q https://github.com/Kong/lua-kong-nginx-module.git $KONG_NGINX_MODULE_DOWNLOAD
+  git clone -q https://$GITHUB_TOKEN:@github.com/Kong/lua-kong-nginx-module.git $KONG_NGINX_MODULE_DOWNLOAD
 fi
 
 #--------
