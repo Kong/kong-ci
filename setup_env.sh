@@ -1,110 +1,73 @@
 #!/usr/bin/env bash
 set -e
 
+# --------
+# Defaults
+# --------
+BUILD_TOOLS=${BUILD_TOOLS:-master}
+OPENRESTY_PATCHES=${OPENRESTY_PATCHES:-master}
+KONG_NGINX_MODULE=${KONG_NGINX_MODULE:-master}
+JOBS=${JOBS:-$(nproc)}
+
+# Add here any env var that makes the build different
+DEPENDENCIES=(
+    "$LUAROCKS"
+    "$OPENRESTY"
+    "$OPENRESTY_PATCHES"
+    "$OPENSSL"
+    "$KONG_NGINX_MODULE"
+)
+DEPS_HASH=$(echo $(IFS=, ; echo "${DEPENDENCIES[*]}") | md5sum | awk '{ print $1 }')
+
 #---------
 # Download
 #---------
-OPENSSL_DOWNLOAD=$DOWNLOAD_CACHE/openssl-$OPENSSL
-OPENRESTY_DOWNLOAD=$DOWNLOAD_CACHE/openresty-$OPENRESTY
-KONG_NGINX_MODULE_DOWNLOAD=$DOWNLOAD_CACHE/lua-kong-nginx-module-$KONG_NGINX_MODULE
-LUAROCKS_DOWNLOAD=$DOWNLOAD_CACHE/luarocks-$LUAROCKS
+BUILD_TOOLS_DOWNLOAD=$DOWNLOAD_CACHE/openresty-build-tools
 
-mkdir -p $OPENSSL_DOWNLOAD $OPENRESTY_DOWNLOAD $LUAROCKS_DOWNLOAD \
-         $KONG_NGINX_MODULE_DOWNLOAD
+mkdir -p $BUILD_TOOLS_DOWNLOAD
 
-if [ ! "$(ls -A $OPENSSL_DOWNLOAD)" ]; then
-  pushd $DOWNLOAD_CACHE
-    curl -s -S -L http://www.openssl.org/source/openssl-$OPENSSL.tar.gz | tar xz
-  popd
-fi
+wget -O $BUILD_TOOLS_DOWNLOAD/kong-ngx-build https://raw.githubusercontent.com/Kong/openresty-build-tools/$BUILD_TOOLS/kong-ngx-build
+chmod +x $BUILD_TOOLS_DOWNLOAD/kong-ngx-build
 
-if [ ! "$(ls -A $OPENRESTY_DOWNLOAD)" ]; then
-  pushd $DOWNLOAD_CACHE
-    curl -s -S -L https://openresty.org/download/openresty-$OPENRESTY.tar.gz | tar xz
-  popd
-fi
-
-if [ ! "$(ls -A $LUAROCKS_DOWNLOAD)" ]; then
-  git clone -q https://github.com/keplerproject/luarocks.git $LUAROCKS_DOWNLOAD
-fi
-
-if [ ! "$(ls -A $KONG_NGINX_MODULE_DOWNLOAD)" ]; then
-  git clone -q https://$GITHUB_TOKEN:@github.com/Kong/lua-kong-nginx-module.git $KONG_NGINX_MODULE_DOWNLOAD
-fi
+export PATH=$BUILD_TOOLS_DOWNLOAD:$PATH
 
 #--------
 # Install
 #--------
-OPENSSL_INSTALL=$INSTALL_CACHE/openssl-$OPENSSL
-OPENRESTY_INSTALL=$INSTALL_CACHE/openresty-$OPENRESTY
-LUAROCKS_INSTALL=$INSTALL_CACHE/luarocks-$LUAROCKS
+INSTALL_ROOT=$INSTALL_CACHE/$DEPS_HASH
 
-mkdir -p $OPENSSL_INSTALL $OPENRESTY_INSTALL $LUAROCKS_INSTALL
+mkdir -p $INSTALL_ROOT
 
-if [ ! "$(ls -A $OPENSSL_INSTALL)" ]; then
-  pushd $OPENSSL_DOWNLOAD
-    ./config shared --prefix=$OPENSSL_INSTALL &> build.log || (cat build.log && exit 1)
-    make &> build.log || (cat build.log && exit 1)
-    make install_sw &> build.log || (cat build.log && exit 1)
-  popd
-fi
+kong-ngx-build \
+    --work $DOWNLOAD_CACHE \
+    --prefix $INSTALL_ROOT \
+    --openresty $OPENRESTY \
+    --openresty-patches $OPENRESTY_PATCHES \
+    --kong-nginx-module $KONG_NGINX_MODULE \
+    --luarocks $LUAROCKS \
+    --openssl $OPENSSL \
+    -j $JOBS &> build.log || (cat build.log && exit 1)
 
-if [ ! "$(ls -A $OPENRESTY_INSTALL)" ]; then
-  OPENRESTY_OPTS=(
-    "--prefix=$OPENRESTY_INSTALL"
-    "--with-cc-opt='-I$OPENSSL_INSTALL/include'"
-    "--with-ld-opt='-L$OPENSSL_INSTALL/lib -Wl,-rpath,$OPENSSL_INSTALL/lib'"
-    "--with-pcre-jit"
-    "--with-http_ssl_module"
-    "--with-http_realip_module"
-    "--with-http_stub_status_module"
-    "--with-http_v2_module"
-    "--with-stream_ssl_preread_module"
-    "--add-module=$KONG_NGINX_MODULE_DOWNLOAD"
-  )
 
-  pushd $OPENRESTY_DOWNLOAD
-    eval ./configure ${OPENRESTY_OPTS[*]} &> build.log || (cat build.log && exit 1)
-    make &> build.log || (cat build.log && exit 1)
-    make install &> build.log || (cat build.log && exit 1)
 
-    pushd $KONG_NGINX_MODULE_DOWNLOAD
-      git checkout -q $KONG_NGINX_MODULE
-      make install LUA_LIB_DIR=$OPENRESTY_INSTALL/lualib
-    popd
-  popd
-fi
-
-if [ ! "$(ls -A $LUAROCKS_INSTALL)" ]; then
-  pushd $LUAROCKS_DOWNLOAD
-    git checkout -q v$LUAROCKS
-    ./configure \
-      --prefix=$LUAROCKS_INSTALL \
-      --lua-suffix=jit \
-      --with-lua=$OPENRESTY_INSTALL/luajit \
-      --with-lua-include=$OPENRESTY_INSTALL/luajit/include/luajit-2.1 \
-      &> build.log || (cat build.log && exit 1)
-    make build &> build.log || (cat build.log && exit 1)
-    make install &> build.log || (cat build.log && exit 1)
-  popd
-fi
+OPENSSL_INSTALL=$INSTALL_ROOT/openssl
+OPENRESTY_INSTALL=$INSTALL_ROOT/openresty
+LUAROCKS_INSTALL=$INSTALL_ROOT/luarocks
 
 export OPENSSL_DIR=$OPENSSL_INSTALL # for LuaSec install
 
-export PATH=$PATH:$OPENRESTY_INSTALL/nginx/sbin:$OPENRESTY_INSTALL/bin:$LUAROCKS_INSTALL/bin
+export PATH=$OPENSSL_INSTALL/bin:$OPENRESTY_INSTALL/nginx/sbin:$OPENRESTY_INSTALL/bin:$LUAROCKS_INSTALL/bin:$PATH
 export LD_LIBRARY_PATH=$OPENSSL_INSTALL/lib:$LD_LIBRARY_PATH # for openssl's CLI invoked in the test suite
 
 eval `luarocks path`
 
 # -------------------------------------
-# Install ccm & setup Cassandra cluster
+# Setup Cassandra cluster
 # -------------------------------------
-if [[ -n "$CASSANDRA" ]]; then
-  pip install --user PyYAML six ccm &> build.log || (cat build.log && exit 1)
-  ccm create test -v $CASSANDRA -n 1 -d
-  ccm start -v --wait-for-binary-proto
-  ccm status
-fi
+echo "Setting up Cassandra"
+docker run -d --name=cassandra --rm -p 7199:7199 -p 7000:7000 -p 9160:9160 -p 9042:9042 cassandra:$CASSANDRA
+grep -q 'Created default superuser role' <(docker logs -f cassandra)
+
 
 nginx -V
 resty -V
