@@ -68,6 +68,7 @@ echo "Setting up Cassandra"
 docker run -d --name=cassandra --rm -p 7199:7199 -p 7000:7000 -p 9160:9160 -p 9042:9042 cassandra:$CASSANDRA
 grep -q 'Created default superuser role' <(docker logs -f cassandra)
 
+docker run -d --name grpcbin -p 15002:9000 -p 15003:9001 moul/grpcbin
 
 nginx -V
 resty -V
