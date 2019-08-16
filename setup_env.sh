@@ -26,7 +26,7 @@ BUILD_TOOLS_DOWNLOAD=$DOWNLOAD_CACHE/openresty-build-tools
 
 mkdir -p $BUILD_TOOLS_DOWNLOAD
 
-git clone https://github.com/Kong/openresty-build-tools.git $DOWNLOAD_ROOT/openresty-build-tools
+git clone https://github.com/Kong/openresty-build-tools.git $DOWNLOAD_CACHE/openresty-build-tools
 
 export PATH=$BUILD_TOOLS_DOWNLOAD:$PATH
 
