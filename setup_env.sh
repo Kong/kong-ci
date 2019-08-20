@@ -22,12 +22,10 @@ DEPS_HASH=$(echo $(IFS=, ; echo "${DEPENDENCIES[*]}") | md5sum | awk '{ print $1
 #---------
 # Download
 #---------
-BUILD_TOOLS_DOWNLOAD=$DOWNLOAD_CACHE/openresty-build-tools
-
+BUILD_TOOLS_DOWNLOAD=${BUILD_TOOLS_DOWNLOAD:-$HOME/openresty-build-tools}
 mkdir -p $BUILD_TOOLS_DOWNLOAD
-
-git clone https://github.com/Kong/openresty-build-tools.git $DOWNLOAD_CACHE/openresty-build-tools
-
+curl -sSL https://github.com/kong/openresty-build-tools/archive/${BUILD_TOOLS}.tar.gz \
+          | tar -C ${BUILD_TOOLS_DOWNLOAD} -xz --strip-components=1
 export PATH=$BUILD_TOOLS_DOWNLOAD:$PATH
 
 #--------
