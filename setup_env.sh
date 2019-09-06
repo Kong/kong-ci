@@ -61,9 +61,15 @@ eval `luarocks path`
 # -------------------------------------
 # Setup Cassandra cluster
 # -------------------------------------
-echo "Setting up Cassandra"
-docker run -d --name=cassandra --rm -p 7199:7199 -p 7000:7000 -p 9160:9160 -p 9042:9042 cassandra:$CASSANDRA
-grep -q 'Created default superuser role' <(docker logs -f cassandra)
+if [ -n "$CASSANDRA" ]
+then
+  echo "Setting up Cassandra"
+  docker run -d --name=cassandra --rm -p 7199:7199 -p 7000:7000 -p 9160:9160 -p 9042:9042 cassandra:$CASSANDRA
+  grep -q 'Created default superuser role' <(docker logs -f cassandra)
+else
+  echo "CASSANDRA environment variable not set: skipping setting up Cassandra"
+fi
+
 
 docker run -d --name grpcbin -p 15002:9000 -p 15003:9001 moul/grpcbin
 
