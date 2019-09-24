@@ -9,6 +9,12 @@ OPENRESTY_PATCHES=${OPENRESTY_PATCHES:-master}
 KONG_NGINX_MODULE=${KONG_NGINX_MODULE:-master}
 JOBS=${JOBS:-$(nproc)}
 
+
+if [[ -z "$LUAROCKS" ]] || [[ -z "$OPENRESTY" ]] || [[ -z "$OPENSSL" ]]; then
+  echo "need \$LUAROCKS, \$OPENRESTY and \$OPENSSL to build dependencies"
+  exit 1
+fi
+
 # Add here any env var that makes the build different
 DEPENDENCIES=(
     "$LUAROCKS"
