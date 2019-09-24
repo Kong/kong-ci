@@ -24,7 +24,8 @@ pushd $CI_TOOLS_DIR
     # We cannot use `make setup-ci`, because we need to source it to have
     # the relevant environment variables set ($PATH, mainly)
     OPENRESTY=$(req_find .requirements RESTY_VERSION)
-    LUAROCKS=$(req_find .requirements RESTY_LUAROCKS_VERSION)
+    #LUAROCKS=$(req_find .requirements RESTY_LUAROCKS_VERSION)
+    LUAROCKS=3.2.1
     OPENSSL=$(req_find .requirements RESTY_OPENSSL_VERSION)
 
     # Lol.. make sure that openresty-build-tools is not on our download
