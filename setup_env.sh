@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -xe
 
 # --------
 # Defaults
@@ -84,4 +84,4 @@ resty -V
 luarocks --version
 openssl version
 
-set +e
+set +xe

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -xe
 
 function req_find {
   grep $2 $1 | head -n 1 | sed 's/.*=//'
@@ -45,4 +45,5 @@ pushd $TRAVIS_BUILD_DIR
   export BUSTED_CMD_="cd $CI_TOOLS_DIR/$KONG_REPOSITORY && bin/busted $BUSTED_ARGS $TEST_FILE_PATH"
   export BUSTED_CMD='echo EXECUTING: $BUSTED_CMD_; '$BUSTED_CMD_
 popd
-set +e
+
+set +xe
