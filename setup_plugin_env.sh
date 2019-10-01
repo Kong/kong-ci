@@ -20,10 +20,16 @@ pushd $CI_TOOLS_DIR
     OPENRESTY=$(req_find .requirements RESTY_VERSION)
     LUAROCKS=$(req_find .requirements RESTY_LUAROCKS_VERSION)
     OPENSSL=$(req_find .requirements RESTY_OPENSSL_VERSION)
+    OPENRESTY_PATCHES_BRANCH=$(req_find .requirements OPENRESTY_PATCHES_BRANCH)
+    KONG_NGINX_MODULE_BRANCH=$(req_find .requirements KONG_NGINX_MODULE_BRANCH)
+    BUILD_TOOLS=$(req_find .requirements BUILD_TOOLS)
 
     export OPENRESTY
     export LUAROCKS
     export OPENSSL
+    export OPENRESTY_PATCHES_BRANCH
+    export KONG_NGINX_MODULE_BRANCH
+    export BUILD_TOOLS
 
     source $CI_TOOLS_DIR/setup_env.sh
 
