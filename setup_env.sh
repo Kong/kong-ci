@@ -19,9 +19,9 @@ fi
 DEPENDENCIES=(
     "$LUAROCKS"
     "$OPENRESTY"
-    "$OPENRESTY_PATCHES"
+    "$OPENRESTY_PATCHES_BRANCH"
     "$OPENSSL"
-    "$KONG_NGINX_MODULE"
+    "$KONG_NGINX_MODULE_BRANCH"
 )
 DEPS_HASH=$(echo $(IFS=, ; echo "${DEPENDENCIES[*]}") | md5sum | awk '{ print $1 }')
 
@@ -45,8 +45,8 @@ kong-ngx-build \
     --work $DOWNLOAD_CACHE \
     --prefix $INSTALL_ROOT \
     --openresty $OPENRESTY \
-    --openresty-patches $OPENRESTY_PATCHES \
-    --kong-nginx-module $KONG_NGINX_MODULE \
+    --openresty-patches $OPENRESTY_PATCHES_BRANCH \
+    --kong-nginx-module $KONG_NGINX_MODULE_BRANCH \
     --luarocks $LUAROCKS \
     --openssl $OPENSSL \
     -j $JOBS &> build.log || (cat build.log && exit 1)
