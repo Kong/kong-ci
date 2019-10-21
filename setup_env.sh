@@ -66,7 +66,7 @@ eval `luarocks path`
 
 # Install required passwdqc-dev to run kong-ee. Ideally this is compiled and
 # installed on the environment
-apt-get update && apt-get install -y libpasswdqc-dev
+sudo apt-get install -y libpasswdqc-dev
 
 # -------------------------------------
 # Setup Cassandra cluster
