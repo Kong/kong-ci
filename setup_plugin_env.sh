@@ -31,6 +31,8 @@ pushd $CI_TOOLS_DIR
     export KONG_NGINX_MODULE_BRANCH
     export BUILD_TOOLS
 
+    export PATH=$PATH:$PWD/bin
+
     source $CI_TOOLS_DIR/setup_env.sh
 
     make dev
