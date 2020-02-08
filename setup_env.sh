@@ -5,7 +5,6 @@ set -xe
 # Defaults
 # --------
 BUILD_TOOLS=${BUILD_TOOLS:-master}
-OPENRESTY_PATCHES_BRANCH=${OPENRESTY_PATCHES_BRANCH:-master}
 KONG_NGINX_MODULE_BRANCH=${KONG_NGINX_MODULE_BRANCH:-master}
 JOBS=${JOBS:-$(nproc)}
 
@@ -19,7 +18,6 @@ fi
 DEPENDENCIES=(
     "$LUAROCKS"
     "$OPENRESTY"
-    "$OPENRESTY_PATCHES_BRANCH"
     "$OPENSSL"
     "$KONG_NGINX_MODULE_BRANCH"
 )
@@ -28,11 +26,11 @@ DEPS_HASH=$(echo $(IFS=, ; echo "${DEPENDENCIES[*]}") | md5sum | awk '{ print $1
 #---------
 # Download
 #---------
-BUILD_TOOLS_DOWNLOAD=${BUILD_TOOLS_DOWNLOAD:-$HOME/openresty-build-tools}
+BUILD_TOOLS_DOWNLOAD=${BUILD_TOOLS_DOWNLOAD:-$HOME/kong-build-tools}
 mkdir -p $BUILD_TOOLS_DOWNLOAD
-curl -sSL https://github.com/kong/openresty-build-tools/archive/${BUILD_TOOLS}.tar.gz \
+curl -sSL https://github.com/kong/kong-build-tools/archive/${BUILD_TOOLS}.tar.gz \
           | tar -C ${BUILD_TOOLS_DOWNLOAD} -xz --strip-components=1
-export PATH=$BUILD_TOOLS_DOWNLOAD:$PATH
+export PATH=$BUILD_TOOLS_DOWNLOAD/openresty-build-tools:$PATH
 
 #--------
 # Install
@@ -45,7 +43,6 @@ kong-ngx-build \
     --work $DOWNLOAD_CACHE \
     --prefix $INSTALL_ROOT \
     --openresty $OPENRESTY \
-    --openresty-patches $OPENRESTY_PATCHES_BRANCH \
     --kong-nginx-module $KONG_NGINX_MODULE_BRANCH \
     --luarocks $LUAROCKS \
     --openssl $OPENSSL \
